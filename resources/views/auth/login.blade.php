@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Login | Vuexy</title>
+    <title>Login | {{ env('APP_NAME') }}</title>
     <link rel="stylesheet" href="{{ asset('backend') }}/vendor/css/pages/page-auth.css">
     @include('backend.layouts.partials.style')
 </head>
@@ -73,12 +73,12 @@
                             </div>
                         </form>
 
-                        <p class="text-center">
+                        {{-- <p class="text-center">
                             <span>New on our platform?</span>
                             <a href="{{ route('register') }}">
                                 <span>Create an account</span>
                             </a>
-                        </p>
+                        </p> --}}
 
                         {{-- <div class="divider my-6">
                             <div class="divider-text">or</div>

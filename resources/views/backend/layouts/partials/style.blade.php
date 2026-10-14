@@ -1,5 +1,5 @@
 <!-- Favicon -->
-<link rel="icon" type="image/x-icon" href="{{ asset('backend') }}/logo/unicorn_logo.png">
+<link rel="icon" type="image/x-icon" href="{{ asset('backend') }}/img/logo/unicorn_logo.png">
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
