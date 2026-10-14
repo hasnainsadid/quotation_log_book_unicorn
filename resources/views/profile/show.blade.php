@@ -58,8 +58,8 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-start align-items-sm-center gap-6">
                                             <img src="{{ auth()->user()->profile_photo_path
-                                                ? Storage::url(auth()->user()->profile_photo_path)
-                                                : Storage::url('default.png') }}"
+                                                ? asset('backend/img/profile/' . basename(auth()->user()->profile_photo_path))
+                                                : asset('backend/img/profile/default.png') }}"
                                                 alt="user-avatar" class="d-block w-px-100 h-px-100 rounded"
                                                 id="uploadedAvatar">
                                             <div class="button-wrapper">

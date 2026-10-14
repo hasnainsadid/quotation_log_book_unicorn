@@ -10,23 +10,34 @@ use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 
 class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 {
-    /**
-     * Validate and update the given user's profile information.
-     *
-     * @param  array<string, mixed>  $input
-     */
     public function update(User $user, array $input): void
     {
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($user->id),
+            ],
             'phone' => ['nullable', 'numeric', 'digits_between:10,15'],
             'address' => ['nullable', 'string'],
-            'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
+            'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:2048'],
         ])->validateWithBag('updateProfileInformation');
 
         if (isset($input['photo'])) {
-            $user->updateProfilePhoto($input['photo']);
+            $file = $input['photo'];
+
+            $fileName = uniqid('profile_') . '.' . $file->getClientOriginalExtension();
+
+            $file->move(
+                public_path('backend/img/profile'),
+                $fileName
+            );
+
+            $user->forceFill([
+                'profile_photo_path' => $fileName,
+            ])->save();
         }
 
         if (
@@ -38,18 +49,14 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             $user->forceFill([
                 'name' => $input['name'],
                 'email' => $input['email'],
-                'phone' => $input['phone'],
-                'address' => $input['address'],
+                'phone' => $input['phone'] ?? null,
+                'address' => $input['address'] ?? null,
             ])->save();
+
             notify()->success('Profile updated successfully.');
         }
     }
 
-    /**
-     * Update the given verified user's profile information.
-     *
-     * @param  array<string, string>  $input
-     */
     protected function updateVerifiedUser(User $user, array $input): void
     {
         $user->forceFill([
@@ -60,16 +67,4 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 
         $user->sendEmailVerificationNotification();
     }
-
-    // protected function sendEmailVerificationMail(): void
-    // {
-    //     if (auth()->user()->hasVerifiedEmail()) {
-    //         notify()->info('Your email is already verified.');
-    //         return back();
-    //     }
-
-    //     auth()->user()->sendEmailVerificationNotification();
-    //     notify()->success('A new verification link has been sent to your email address.');
-    //     return back();
-    // }
 }
