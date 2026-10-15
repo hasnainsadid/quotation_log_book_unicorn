@@ -1,4 +1,5 @@
 <?php
+
 namespace App\DataTables;
 
 use App\Models\QuatationLogBook;
@@ -10,9 +11,22 @@ use Yajra\DataTables\Services\DataTable;
 
 class QuatationLogBookDataTable extends DataTable
 {
+    // status: 1 = Received Data, 2 = PQ Taken, 3 = Quotation Needed
+    private const STATUS_LABELS = [
+        1 => 'Received Data',
+        2 => 'PQ Taken',
+        3 => 'Quotation Needed',
+    ];
+
     // Database-er raw value ke table-e dekhanor moto kore sajay //
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
+        // export request (Excel/PDF) shudhu allowed role-ra korte parbe
+        if (request()->boolean('export')
+            && ! auth()->user()?->hasAnyRole(QuatationLogBook::EXPORT_ROLES)) {
+            abort(403, 'You are not allowed to export.');
+        }
+
         return (new EloquentDataTable($query))
             ->editColumn('contact_numbers', fn($row) => $this->stack($row->contact_numbers))
             ->editColumn('contact_persons', fn($row) => $this->stack($row->contact_persons))
@@ -29,7 +43,16 @@ class QuatationLogBookDataTable extends DataTable
             ->addColumn('given_price', fn($row) => $this->stack(
                 collect($row->offers)->map(fn($o) => number_format((float) ($o['price'] ?? 0)))->all()
             ))
-            ->editColumn('pq_taken_by', fn($row) => e($row->pqUser?->name ?? $row->pq_taken_by))
+            ->editColumn('status', fn($row) => match ((int) $row->status) {
+                1       => '<span class="badge bg-label-secondary">Received Data</span>',
+                2       => '<span class="badge bg-label-success">PQ Taken</span>',
+                3       => '<span class="badge bg-label-warning">Quotation Needed</span>',
+                default => '-',
+            })
+            // Received Data hole PQ Taken By dekhabe na
+            ->editColumn('pq_taken_by', fn($row) => (int) $row->status === 1
+                ? '-'
+                : e($row->pqUser?->name ?? $row->pq_taken_by))
             ->editColumn('pq_date', fn($row) => $row->pq_date?->format('d/m/y'))
             ->addColumn('action', function ($row) {
                 // export-er somoy action column render korbo na (slow hoy)
@@ -48,6 +71,14 @@ class QuatationLogBookDataTable extends DataTable
             ->filterColumn('lift_size', function ($q, $k) {
                 $q->whereRaw("CONCAT_WS(' ', lift_size, capacity_kg, passengers, floors) LIKE ?", ["%{$k}%"]);
             })
+            ->filterColumn('status', function ($q, $k) {
+                // "PQ Taken", "received" ityadi likhe search korle shei status-er entry ashbe
+                $ids = collect(self::STATUS_LABELS)
+                    ->filter(fn($label) => stripos($label, $k) !== false)
+                    ->keys();
+
+                $ids->isEmpty() ? $q->whereRaw('1 = 0') : $q->whereIn('status', $ids->all());
+            })
             ->filterColumn('pq_date', function ($q, $k) {
                 $q->whereRaw("DATE_FORMAT(pq_date, '%d/%m/%y') LIKE ?", ["%{$k}%"]);
             })
@@ -59,7 +90,7 @@ class QuatationLogBookDataTable extends DataTable
             })
             ->rawColumns([
                 'contact_numbers', 'contact_persons', 'lift_size',
-                'lift_brand', 'given_price', 'action',
+                'lift_brand', 'given_price', 'status', 'action',
             ])
             ->setRowId('id');
     }
@@ -100,12 +131,13 @@ class QuatationLogBookDataTable extends DataTable
             Column::make('project_address')->title('Project Address'),
             Column::make('contact_numbers')->title('Contact Number')->orderable(false),
             Column::make('contact_persons')->title('Contact Person')->orderable(false),
-            Column::make('lift_size')->title('Lift Size'),
+            Column::make('lift_size')->title('Shaft Size'),
             Column::computed('lift_brand')->title('Lift Brand')->searchable(true),
             Column::computed('given_price')->title('Given Price')->searchable(true),
             Column::make('lift_quantity')->title('Lift Quantity'),
             Column::make('sub_station')->title('Sub-station'),
             Column::make('generator')->title('Generator'),
+            Column::make('status')->title('Status')->addClass('text-center'),
             Column::make('pq_taken_by')->title('PQ Taken By'),
             Column::make('pq_date')->title('PQ Date'),
             Column::make('remarks')->title('Remarks'),

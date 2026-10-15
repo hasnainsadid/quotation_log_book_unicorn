@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Backend;
 
 use App\DataTables\QuatationLogBookDataTable;
@@ -78,18 +77,36 @@ class QuatationLogBookController extends Controller
      */
     private function payload(Request $request, ?QuatationLogBook $log = null): array
     {
-        $data = $request->except(['_token', '_method', 'pq_user_id', 'pq_taken_by']);
+        $request->validate([
+            'status' => 'required|in:1,2,3',
+        ]);
+
+        $data    = $request->except(['_token', '_method', 'pq_user_id', 'pq_taken_by']);
+        $needsPq = in_array((int) $request->status, [2, 3], true);
 
         if (QuatationLogBook::canViewAll()) {
-            $request->validate(['pq_user_id' => 'required|exists:users,id']);
-            $userId = (int) $request->pq_user_id;
+            if ($needsPq) {
+                $request->validate(['pq_user_id' => 'required|exists:users,id']);
+                $userId = (int) $request->pq_user_id;
+            } else {
+                // Received Data: notun hole khali, edit hole aager malik thakbe
+                // (nahole oi Employee nijer entry-ta dekhte pabe na)
+                $userId = $log?->pq_user_id;
+            }
         } else {
-            // Employee/Manager: create-এ নিজের নাম, update-এ আগেরটাই থাকবে
+            // Employee/Manager: create-e nijer nam, update-e aagerta-i thakbe.
+            // Status 1 hole-o malik thakbe, tai entry-ta nijer list-e thakbe.
             $userId = $log?->pq_user_id ?? auth()->id();
         }
 
+        if (! $needsPq) {
+            $data['pq_date'] = null;
+        }
+
         $data['pq_user_id']  = $userId;
-        $data['pq_taken_by'] = User::whereKey($userId)->value('name');
+        $data['pq_taken_by'] = ($needsPq && $userId)
+            ? User::whereKey($userId)->value('name')
+            : null;
 
         return $data;
     }

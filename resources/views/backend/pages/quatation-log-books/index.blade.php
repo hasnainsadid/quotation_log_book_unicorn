@@ -59,7 +59,7 @@
                                 </div>
 
                                 <div class="col-md-3">
-                                    <label class="form-label">Lift Size (1400x1000)</label>
+                                    <label class="form-label">Shaft Size (1400x1000)</label>
                                     <input type="text" name="lift_size" class="form-control">
                                 </div>
                                 <div class="col-md-3">
@@ -98,10 +98,19 @@
                                     <input type="text" name="generator" class="form-control">
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <label class="form-label">Status</label>
+                                    <select name="status" class="form-select status-select" required>
+                                        <option value="">-- Select Status --</option>
+                                        <option value="1">Received Data</option>
+                                        <option value="2">PQ Taken</option>
+                                        <option value="3">Quotation Needed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 pq-field" style="display:none">
                                     <label class="form-label">PQ Taken By</label>
                                     @if ($users->isNotEmpty())
-                                        <select name="pq_user_id" class="form-select" required>
+                                        <select name="pq_user_id" class="form-select">
                                             <option value="">-- Select User --</option>
                                             @foreach ($users as $user)
                                                 <option value="{{ $user->id }}">{{ $user->name }}</option>
@@ -112,7 +121,7 @@
                                             readonly>
                                     @endif
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4 pq-field" style="display:none">
                                     <label class="form-label">PQ Date</label>
                                     <input type="date" name="pq_date" class="form-control">
                                 </div>
@@ -165,7 +174,7 @@
                                 </div>
 
                                 <div class="col-md-3">
-                                    <label class="form-label">Lift Size (1400x1000)</label>
+                                    <label class="form-label">Shaft Size (1400x1000)</label>
                                     <input type="text" name="lift_size" class="form-control">
                                 </div>
                                 <div class="col-md-3">
@@ -203,10 +212,19 @@
                                     <input type="text" name="generator" class="form-control">
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <label class="form-label">Status</label>
+                                    <select name="status" class="form-select status-select" required>
+                                        <option value="">-- Select Status --</option>
+                                        <option value="1">Received Data</option>
+                                        <option value="2">PQ Taken</option>
+                                        <option value="3">Quotation Needed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 pq-field" style="display:none">
                                     <label class="form-label">PQ Taken By</label>
                                     @if ($users->isNotEmpty())
-                                        <select name="pq_user_id" class="form-select" required>
+                                        <select name="pq_user_id" class="form-select">
                                             <option value="">-- Select User --</option>
                                             @foreach ($users as $user)
                                                 <option value="{{ $user->id }}">{{ $user->name }}</option>
@@ -217,7 +235,7 @@
                                             readonly>
                                     @endif
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4 pq-field" style="display:none">
                                     <label class="form-label">PQ Date</label>
                                     <input type="date" name="pq_date" class="form-control">
                                 </div>
@@ -250,7 +268,7 @@
         $(document).ready(function() {
             const fields = ['project_name', 'project_address', 'lift_size', 'capacity_kg', 'passengers',
                 'floors', 'lift_quantity', 'sub_station', 'generator',
-                'pq_user_id', 'pq_date', 'remarks'
+                'status', 'pq_user_id', 'pq_date', 'remarks'
             ];
 
             let offerIndex = 0;
@@ -286,10 +304,30 @@
                 });
             }
 
+            // Status 2 (PQ Taken) / 3 (Quotation Needed) hole PQ field dekhabe.
+            // 1 (Received Data) ba khali hole lukabe + value muche dibe (DB-te o khali jabe)
+            function togglePq($form) {
+                const status = String($form.find('.status-select').val() || '');
+                const show = (status === '2' || status === '3');
+                const $pq = $form.find('.pq-field');
+
+                $pq.toggle(show);
+                $pq.find('select[name="pq_user_id"]').prop('required', show);
+
+                if (!show) {
+                    $pq.find('select[name], input[name]').val('');
+                }
+            }
+
+            $(document).on('change', '.status-select', function() {
+                togglePq($(this).closest('form'));
+            });
+
             // Reset form when the Add modal opens
             $('#logAddModal').on('show.bs.modal', function() {
                 $('#addLogForm')[0].reset();
                 resetRows('add');
+                togglePq($('#addLogForm'));
             });
 
             // Row add / remove
@@ -325,6 +363,8 @@
                             if (f === 'pq_date' && val) val = val.substring(0, 10);
                             $('#editLogForm [name="' + f + '"]').val(val);
                         });
+
+                        togglePq($('#editLogForm'));
 
                         let numbers = res.contact_numbers ?? [];
                         let persons = res.contact_persons ?? [];
