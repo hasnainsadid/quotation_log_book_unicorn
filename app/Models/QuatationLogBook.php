@@ -13,6 +13,8 @@ class QuatationLogBook extends Model
     // এই role-গুলো সব quotation দেখতে ও যেকোনো user-এর নামে add করতে পারবে
     public const FULL_ACCESS_ROLES = ['Super Admin', 'Chairman', 'Managing Director', 'Deputy Managing Director'];
 
+    public const EXPORT_ROLES = ['Super Admin', 'Chairman', 'Managing Director', 'Deputy Managing Director'];
+
     protected $guarded = [];
 
     protected $casts = [

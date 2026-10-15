@@ -31,7 +31,14 @@ class QuatationLogBookDataTable extends DataTable
             ))
             ->editColumn('pq_taken_by', fn($row) => e($row->pqUser?->name ?? $row->pq_taken_by))
             ->editColumn('pq_date', fn($row) => $row->pq_date?->format('d/m/y'))
-            ->addColumn('action', fn($row) => view('backend.pages.quatation-log-books.partials._action', compact('row'))->render())
+            ->addColumn('action', function ($row) {
+                // export-er somoy action column render korbo na (slow hoy)
+                if (request()->boolean('export')) {
+                    return '';
+                }
+
+                return view('backend.pages.quatation-log-books.partials._action', compact('row'))->render();
+            })
 
             // Search support
             ->filterColumn('contact_numbers', fn($q, $k) => $q->whereRaw('CAST(contact_numbers AS CHAR) LIKE ?', ["%{$k}%"]))
@@ -80,6 +87,7 @@ class QuatationLogBookDataTable extends DataTable
             ->setTableId('quatation-log-books-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
+            ->processing(true)
             ->orderBy(0, 'desc')
             ->selectStyleSingle();
     }
@@ -108,7 +116,7 @@ class QuatationLogBookDataTable extends DataTable
                 ->exportable(false)
                 ->printable(false)
                 ->width(60)
-                ->addClass('text-center');
+                ->addClass('text-center no-export');
         }
 
         return $columns;

@@ -3,10 +3,17 @@
 @section('content')
     <div class="container-xxl flex-grow-1 container-p-y">
         <!-- Basic Bootstrap Table -->
+        @php
+            $canExport = auth()->user()?->hasAnyRole(\App\Models\QuatationLogBook::EXPORT_ROLES);
+        @endphp
         <div class="card">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="card-header">All Quotation Logs</h5>
-                <div class="mx-5">
+                <div class="mx-5 d-flex align-items-center gap-2">
+                    @if ($canExport)
+                        <div id="exportButtons" class="d-flex gap-2"></div>
+                    @endif
+
                     @if (hasPermission(['quatation-log-books.create']))
                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#logAddModal">Add
                             New</button>
@@ -230,9 +237,15 @@
             </div>
         </div>
     </div>
-    {!! $dataTable->scripts() !!}
 @endsection
+
 @push('scripts')
+    {{-- Excel / PDF export (library + button + function) --}}
+    @include('backend.layouts.partials.datatable_export', ['exportTitle' => 'Quotation Log Book'])
+
+    {{-- DataTable চালু (লাইব্রেরির পরে) --}}
+    {!! $dataTable->scripts() !!}
+
     <script>
         $(document).ready(function() {
             const fields = ['project_name', 'project_address', 'lift_size', 'capacity_kg', 'passengers',

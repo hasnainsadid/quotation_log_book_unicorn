@@ -229,7 +229,6 @@
                                         <th>Name</th>
                                         <th>Designation</th>
                                         <th>Role</th>
-                                        <th>Joined</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -242,7 +241,6 @@
                                                     {{ $u->roles->pluck('name')->first() ?? '-' }}
                                                 </span>
                                             </td>
-                                            <td>{{ $u->created_at?->diffForHumans() ?? '-' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
