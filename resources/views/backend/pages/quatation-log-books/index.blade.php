@@ -98,8 +98,8 @@
                                     <input type="text" name="generator" class="form-control">
                                 </div>
 
-                                <div class="col-md-4">
-                                    <label class="form-label">Status</label>
+                                <div class="col-md-12">
+                                    <label class="form-label">Status <span class="text-danger">*</span></label>
                                     <select name="status" class="form-select status-select" required>
                                         <option value="">-- Select Status --</option>
                                         <option value="1">Received Data</option>
@@ -107,7 +107,7 @@
                                         <option value="3">Quotation Needed</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4 pq-field" style="display:none">
+                                <div class="col-md-6 pq-field" style="display:none">
                                     <label class="form-label">PQ Taken By</label>
                                     @if ($users->isNotEmpty())
                                         <select name="pq_user_id" class="form-select">
@@ -121,7 +121,7 @@
                                             readonly>
                                     @endif
                                 </div>
-                                <div class="col-md-4 pq-field" style="display:none">
+                                <div class="col-md-6 pq-field" style="display:none">
                                     <label class="form-label">PQ Date</label>
                                     <input type="date" name="pq_date" class="form-control">
                                 </div>
@@ -212,16 +212,16 @@
                                     <input type="text" name="generator" class="form-control">
                                 </div>
 
-                                <div class="col-md-4">
-                                    <label class="form-label">Status</label>
+                                <div class="col-md-12">
+                                    <label class="form-label">Status <span class="text-danger">*</span></label>
                                     <select name="status" class="form-select status-select" required>
-                                        <option value="">-- Select Status --</option>
+                                        {{-- <option value="">-- Select Status --</option> --}}
                                         <option value="1">Received Data</option>
                                         <option value="2">PQ Taken</option>
                                         <option value="3">Quotation Needed</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4 pq-field" style="display:none">
+                                <div class="col-md-6 pq-field" style="display:none">
                                     <label class="form-label">PQ Taken By</label>
                                     @if ($users->isNotEmpty())
                                         <select name="pq_user_id" class="form-select">
@@ -235,7 +235,7 @@
                                             readonly>
                                     @endif
                                 </div>
-                                <div class="col-md-4 pq-field" style="display:none">
+                                <div class="col-md-6 pq-field" style="display:none">
                                     <label class="form-label">PQ Date</label>
                                     <input type="date" name="pq_date" class="form-control">
                                 </div>
