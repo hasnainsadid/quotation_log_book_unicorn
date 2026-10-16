@@ -68,7 +68,23 @@ class RoleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $role = Role::findOrFail($id);
+
+        if ($role->id == 1 || $role->name === 'Super Admin') {
+            notify()->error('Super Admin role cannot be deleted');
+            return redirect()->route('roles.index');
+        }
+
+        if ($role->users()->count() > 0) {
+            notify()->error('This role is assigned to users. Remove it from them first.');
+            return redirect()->route('roles.index');
+        }
+
+        $role->syncPermissions([]);
+        $role->delete();
+
+        notify()->success('Role deleted successfully');
+        return redirect()->route('roles.index');
     }
 
     public function addPermission($id)

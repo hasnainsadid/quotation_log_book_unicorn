@@ -215,6 +215,7 @@
                         name: $('#edit_name').val(),
                         email: $('#edit_email').val(),
                         phone: $('#edit_phone').val(),
+                        designation: $('#edit_designation').val(),
                         address: $('#edit_address').val(),
                         role: $('#edit_role').val(),
                     },

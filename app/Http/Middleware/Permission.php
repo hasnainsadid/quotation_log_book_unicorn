@@ -34,12 +34,22 @@ class Permission
             return $next($request);
         }
 
-        // 🔥 Destroy permission controls recycle features
-        $destroyMappedRoutes = ['recycleBin', 'restore', 'forceDelete'];
-
         [$module, $action] = array_pad(explode('.', $routeName, 2), 2, null);
 
-        if ($module && in_array($action, $destroyMappedRoutes) && $user->can($module . '.destroy')) {
+        // Permission page only creates: index / create / edit / destroy.
+        // So map the other route actions onto those permissions:
+        //   store -> create, update -> edit, show -> index,
+        //   recycleBin/restore/forceDelete -> destroy
+        $actionMap = [
+            'store'       => 'create',
+            'update'      => 'edit',
+            'show'        => 'index',
+            'recycleBin'  => 'destroy',
+            'restore'     => 'destroy',
+            'forceDelete' => 'destroy',
+        ];
+
+        if ($module && isset($actionMap[$action]) && $user->can($module . '.' . $actionMap[$action])) {
             return $next($request);
         }
 
