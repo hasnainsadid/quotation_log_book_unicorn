@@ -44,6 +44,9 @@ class Permission
             'store'       => 'create',
             'update'      => 'edit',
             'show'        => 'index',
+            // Role -> Add Permission page ar save
+            'addPermission'     => 'edit',
+            'permissions.store' => 'edit',
             'recycleBin'  => 'destroy',
             'restore'     => 'destroy',
             'forceDelete' => 'destroy',
