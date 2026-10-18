@@ -55,14 +55,19 @@ class DashboardController extends Controller
             });
 
             $quotation = [
-                'total'      => $base()->count(),
-                'this_month' => $base()->where('created_at', '>=', now()->startOfMonth())->count(),
-                'lifts'      => (int) $base()->sum('lift_quantity'),
-                'trashed'    => $base()->onlyTrashed()->count(),
-                'months'     => $months,
-                'max'        => max(1, $months->max('total')),
-                'recent'     => $base()->with('pqUser')->latest()->take(5)->get(),
-                'by_user'    => $canViewAll
+                'total'         => $base()->count(),
+                'this_month'    => $base()->where('created_at', '>=', now()->startOfMonth())->count(),
+                'lifts'         => (int) $base()->sum('lift_quantity'),
+                'trashed'       => $base()->onlyTrashed()->count(),
+                'months'        => $months,
+                'max'           => max(1, $months->max('total')),
+                // sob status er latest 5 (non-admin er "Recent Quotations" card e use hoy)
+                'recent'        => $base()->with('pqUser')->latest()->take(5)->get(),
+                // status 3 = Quotation Needed
+                'recent_needed' => $base()->with('pqUser')->where('status', 3)->latest()->take(5)->get(),
+                // status 2 = PQ Taken
+                'recent_pq'     => $base()->with('pqUser')->where('status', 2)->latest()->take(5)->get(),
+                'by_user'       => $canViewAll
                     ? $base()
                     ->selectRaw('pq_user_id, COUNT(*) as total')
                     ->whereNotNull('pq_user_id')

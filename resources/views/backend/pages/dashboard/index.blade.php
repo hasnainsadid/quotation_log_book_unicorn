@@ -151,42 +151,57 @@
                 </div>
             </div>
 
-            {{-- Recent quotations table (admin only) --}}
+            {{-- Recent Quotation Needed (status 3) + Recent PQ Taken (status 2), admin only --}}
             @if ($canViewAll)
-                <div class="card mb-6">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Recent Quotations</h5>
-                        <a href="{{ route('quatation-log-books.index') }}" class="btn btn-sm btn-outline-primary">View all</a>
-                    </div>
-                    <div class="table-responsive text-nowrap">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Project</th>
-                                    <th>Address</th>
-                                    <th>PQ Taken By</th>
-                                    <th>PQ Date</th>
-                                    <th>Added</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($quotation['recent'] as $q)
+                @php
+                    $recentSections = [
+                        [
+                            'title' => 'Recent Quotation Needed',
+                            'rows'  => $quotation['recent_needed'],
+                            'empty' => 'No quotation needed yet',
+                        ],
+                        [
+                            'title' => 'Recent PQ Taken',
+                            'rows'  => $quotation['recent_pq'],
+                            'empty' => 'No PQ taken yet',
+                        ],
+                    ];
+                @endphp
+
+                @foreach ($recentSections as $section)
+                    <div class="card mb-6">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ $section['title'] }}</h5>
+                            <a href="{{ route('quatation-log-books.index') }}" class="btn btn-sm btn-outline-primary">View all</a>
+                        </div>
+                        <div class="table-responsive text-nowrap">
+                            <table class="table">
+                                <thead>
                                     <tr>
-                                        <td>{{ $q->project_name }}</td>
-                                        <td>{{ \Illuminate\Support\Str::limit($q->project_address, 30) }}</td>
-                                        <td>{{ $q->pqUser?->name ?? $q->pq_taken_by }}</td>
-                                        <td>{{ $q->pq_date?->format('d/m/y') }}</td>
-                                        <td>{{ $q->created_at?->diffForHumans() }}</td>
+                                        <th>Project</th>
+                                        <th>Address</th>
+                                        <th>PQ Taken By</th>
+                                        <th>PQ Date</th>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">No quotations yet</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @forelse ($section['rows'] as $q)
+                                        <tr>
+                                            <td>{{ $q->project_name }}</td>
+                                            <td>{{ \Illuminate\Support\Str::limit($q->project_address, 30) }}</td>
+                                            <td>{{ $q->pqUser?->name ?? $q->pq_taken_by }}</td>
+                                            <td>{{ $q->pq_date?->format('d/m/y') }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">{{ $section['empty'] }}</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                @endforeach
             @endif
         @endif
 
