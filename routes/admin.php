@@ -36,6 +36,7 @@ Route::middleware([
 
     // users
     Route::resource('users', UserController::class)->except(['show']);
+    Route::post('users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggleStatus');
     Route::get('users/recycle-bin', [UserController::class, 'recycleBin'])->name('users.recycleBin');
     Route::post('users/restore/{id}', [UserController::class, 'restore'])->name('users.restore');
     Route::delete('users/force-delete/{id}', [UserController::class, 'forceDelete'])->name('users.forceDelete');

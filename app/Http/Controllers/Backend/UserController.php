@@ -112,6 +112,35 @@ class UserController extends Controller
     }
 
     /**
+     * Activate / deactivate a user.
+     * Deactivated user login korte parbe na.
+     */
+    public function toggleStatus(string $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id == auth()->id()) {
+            notify()->error('You cannot deactivate your own account');
+            return redirect()->route('users.index');
+        }
+
+        if ($user->hasRole('Super Admin')) {
+            notify()->error('Super Admin cannot be deactivated');
+            return redirect()->route('users.index');
+        }
+
+        $user->is_active = ! $user->is_active;
+        $user->save();
+
+        if (! $user->is_active) {
+            $user->tokens()->delete(); // API token thakle bondho
+        }
+
+        notify()->success($user->is_active ? 'User activated successfully' : 'User deactivated successfully');
+        return redirect()->route('users.index');
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)

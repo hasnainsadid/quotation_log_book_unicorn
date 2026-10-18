@@ -133,6 +133,11 @@ class RoleController extends Controller
                 $permissions[$module]['edit'] = "$module.edit";
             }
 
+            // User activate / deactivate
+            if ($action === 'toggleStatus') {
+                $permissions[$module]['status'] = "$module.status";
+            }
+
             if (in_array($action, ['destroy', 'recycleBin', 'restore', 'forceDelete'])) {
                 $permissions[$module]['destroy'] = "$module.destroy";
             }

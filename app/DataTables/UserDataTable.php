@@ -22,11 +22,14 @@ class UserDataTable extends DataTable
             ->editColumn('role', fn($row) =>
                 optional($row->roles->first())->name
             )
+            ->editColumn('is_active', fn($row) => $row->is_active
+                ? '<span class="badge bg-label-success">Active</span>'
+                : '<span class="badge bg-label-danger">Inactive</span>')
             ->editColumn('address', fn($row) => wordwrap($row->address, 30, "<br>", true))
             ->filterColumn('role', function ($q, $keyword) {
                 $q->whereHas('roles', fn($r) => $r->where('name', 'like', "%{$keyword}%"));
             })
-            ->rawColumns(['address', 'role', 'action'])
+            ->rawColumns(['address', 'role', 'is_active', 'action'])
             ->setRowId('id');
     }
 
@@ -67,14 +70,15 @@ class UserDataTable extends DataTable
     public function getColumns(): array
     {
         $columns = [
-    Column::make('name'),
-    Column::make('email'),
-    Column::make('phone'),
-    Column::make('designation'),
-    Column::make('role')->orderable(false),
-    Column::make('address'),
-];
-        if (hasPermission(['users.edit', 'users.destroy'])) {
+            Column::make('name'),
+            Column::make('email'),
+            Column::make('phone'),
+            Column::make('designation'),
+            Column::make('role')->orderable(false),
+            Column::make('address'),
+            Column::make('is_active')->title('Status')->addClass('text-center'),
+        ];
+        if (hasPermission(['users.edit', 'users.destroy', 'users.status'])) {
             $columns[] = Column::computed('action')
                 ->exportable(false)
                 ->printable(false)

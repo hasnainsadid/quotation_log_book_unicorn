@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
 
@@ -39,6 +40,15 @@ class FortifyServiceProvider extends ServiceProvider
                 ->first();
 
             if ($user && Hash::check($request->input('password'), $user->password)) {
+                // Deactivated user login korte parbe na
+                if ($user->is_active === false) {
+                    notify()->error('Your account has been deactivated. Please contact the administrator.');
+
+                    throw ValidationException::withMessages([
+                        'login' => 'Your account has been deactivated. Please contact the administrator.',
+                    ]);
+                }
+
                 return $user;
             }
 
