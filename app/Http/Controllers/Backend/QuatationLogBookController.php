@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Backend;
 
 use App\DataTables\QuatationLogBookDataTable;
@@ -12,7 +13,7 @@ class QuatationLogBookController extends Controller
     public function index(QuatationLogBookDataTable $dataTable)
     {
         $users = QuatationLogBook::canViewAll()
-            ? User::orderBy('name')->get(['id', 'name'])
+            ? User::where('is_active', 1)->orderBy('name')->get(['id', 'name'])
             : collect();
 
         return $dataTable->render('backend.pages.quatation-log-books.index', compact('users'));
@@ -28,7 +29,9 @@ class QuatationLogBookController extends Controller
 
     public function edit(string $id)
     {
-        return response()->json(QuatationLogBook::visible()->findOrFail($id));
+        return response()->json(
+            QuatationLogBook::visible()->with('pqUser:id,name')->findOrFail($id)
+        );
     }
 
     public function update(Request $request, string $id)
@@ -73,38 +76,34 @@ class QuatationLogBookController extends Controller
     }
 
     /**
-     * Request থেকে ডাটা বানায় এবং pq_user_id নিরাপদে ঠিক করে।
+     * Request থেকে ডাটা বানায় এবং pq_user_id (Responsible Person) নিরাপদে ঠিক করে।
+     * Status যা-ই হোক, Responsible Person ও PQ Date সবসময় সেভ হবে।
      */
     private function payload(Request $request, ?QuatationLogBook $log = null): array
     {
         $request->validate([
-            'status' => 'required|in:1,2,3',
+            'status'     => 'required|in:1,2,3',
+            'pq_user_id' => 'nullable|exists:users,id',
+            'pq_date'    => 'nullable|date',
         ]);
 
-        $data    = $request->except(['_token', '_method', 'pq_user_id', 'pq_taken_by']);
-        $needsPq = in_array((int) $request->status, [2, 3], true);
+        $data = $request->except(['_token', '_method', 'pq_user_id', 'pq_taken_by']);
 
         if (QuatationLogBook::canViewAll()) {
-            if ($needsPq) {
-                $request->validate(['pq_user_id' => 'required|exists:users,id']);
-                $userId = (int) $request->pq_user_id;
-            } else {
-                // Received Data: notun hole khali, edit hole aager malik thakbe
-                // (nahole oi Employee nijer entry-ta dekhte pabe na)
-                $userId = $log?->pq_user_id;
-            }
+            // Admin: je user select korbe sheta, na korle aager malik, tao na thakle login user
+            $userId = $request->filled('pq_user_id')
+                ? (int) $request->pq_user_id
+                : ($log?->pq_user_id ?? auth()->id());
         } else {
-            // Employee/Manager: create-e nijer nam, update-e aagerta-i thakbe.
-            // Status 1 hole-o malik thakbe, tai entry-ta nijer list-e thakbe.
+            // Employee/Manager: create-e nijer nam, update-e aagerta-i thakbe
             $userId = $log?->pq_user_id ?? auth()->id();
         }
 
-        if (! $needsPq) {
-            $data['pq_date'] = null;
-        }
+        // khali string hole date column-e error na hoy
+        $data['pq_date'] = $request->filled('pq_date') ? $request->pq_date : null;
 
         $data['pq_user_id']  = $userId;
-        $data['pq_taken_by'] = ($needsPq && $userId)
+        $data['pq_taken_by'] = $userId
             ? User::whereKey($userId)->value('name')
             : null;
 

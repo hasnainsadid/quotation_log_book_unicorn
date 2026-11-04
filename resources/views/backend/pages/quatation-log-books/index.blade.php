@@ -107,8 +107,8 @@
                                         <option value="3">Quotation Needed</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6 pq-field" style="display:none">
-                                    <label class="form-label">PQ Taken By</label>
+                                <div class="col-md-6">
+                                    <label class="form-label">Responsible Person</label>
                                     @if ($users->isNotEmpty())
                                         <select name="pq_user_id" class="form-select">
                                             <option value="">-- Select User --</option>
@@ -121,7 +121,7 @@
                                             readonly>
                                     @endif
                                 </div>
-                                <div class="col-md-6 pq-field" style="display:none">
+                                <div class="col-md-6">
                                     <label class="form-label">PQ Date</label>
                                     <input type="date" name="pq_date" class="form-control">
                                 </div>
@@ -221,8 +221,8 @@
                                         <option value="3">Quotation Needed</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6 pq-field" style="display:none">
-                                    <label class="form-label">PQ Taken By</label>
+                                <div class="col-md-6">
+                                    <label class="form-label">Responsible Person</label>
                                     @if ($users->isNotEmpty())
                                         <select name="pq_user_id" class="form-select">
                                             <option value="">-- Select User --</option>
@@ -235,7 +235,7 @@
                                             readonly>
                                     @endif
                                 </div>
-                                <div class="col-md-6 pq-field" style="display:none">
+                                <div class="col-md-6">
                                     <label class="form-label">PQ Date</label>
                                     <input type="date" name="pq_date" class="form-control">
                                 </div>
@@ -271,6 +271,9 @@
                 'status', 'pq_user_id', 'pq_date', 'remarks'
             ];
 
+            // Login user: Responsible Person er default
+            const authUserId = "{{ auth()->id() }}";
+
             let offerIndex = 0;
 
             function contactRow(number = '', person = '') {
@@ -304,30 +307,12 @@
                 });
             }
 
-            // Status 2 (PQ Taken) / 3 (Quotation Needed) hole PQ field dekhabe.
-            // 1 (Received Data) ba khali hole lukabe + value muche dibe (DB-te o khali jabe)
-            function togglePq($form) {
-                const status = String($form.find('.status-select').val() || '');
-                const show = (status === '2' || status === '3');
-                const $pq = $form.find('.pq-field');
-
-                $pq.toggle(show);
-                $pq.find('select[name="pq_user_id"]').prop('required', show);
-
-                if (!show) {
-                    $pq.find('select[name], input[name]').val('');
-                }
-            }
-
-            $(document).on('change', '.status-select', function() {
-                togglePq($(this).closest('form'));
-            });
-
             // Reset form when the Add modal opens
             $('#logAddModal').on('show.bs.modal', function() {
                 $('#addLogForm')[0].reset();
                 resetRows('add');
-                togglePq($('#addLogForm'));
+                // Login user default select thakbe (admin chaile change korte parbe)
+                $('#addLogForm [name="pq_user_id"]').val(authUserId);
             });
 
             // Row add / remove
@@ -364,7 +349,19 @@
                             $('#editLogForm [name="' + f + '"]').val(val);
                         });
 
-                        togglePq($('#editLogForm'));
+                        // Responsible Person save kora na thakle login user dekhabe
+                        // Responsible Person: inactive user hole-o ei row-te nam dekhabe
+                        const $sel = $('#editLogForm [name="pq_user_id"]');
+                        $sel.find('option[data-inactive]').remove();
+                        if (res.pq_user_id && res.pq_user &&
+                            !$sel.find('option[value="' + res.pq_user_id + '"]').length) {
+                            $sel.append($('<option>', {
+                                value: res.pq_user_id,
+                                text: res.pq_user.name + ' (inactive)',
+                                'data-inactive': 1
+                            }));
+                        }
+                        $sel.val(res.pq_user_id || authUserId);
 
                         let numbers = res.contact_numbers ?? [];
                         let persons = res.contact_persons ?? [];
@@ -377,10 +374,12 @@
                             }
                         }
 
-                        if ((res.offers ?? []).length) {
+                        // offers array ba object ({"3":{...}}) duitai handle kore
+                        let offers = Object.values(res.offers ?? {});
+                        if (offers.length) {
                             $('#edit_offers').html('');
-                            res.offers.forEach(o => $('#edit_offers').append(offerRow(o.brand ??
-                                '', o.price ?? '')));
+                            offers.forEach(o => $('#edit_offers').append(offerRow(o.brand ?? '',
+                                o.price ?? '')));
                         }
 
                         $('#logEditModal').modal('show');

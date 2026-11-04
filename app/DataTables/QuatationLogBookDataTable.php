@@ -41,7 +41,11 @@ class QuatationLogBookDataTable extends DataTable
             })
             ->addColumn('lift_brand', fn($row) => $this->stack(collect($row->offers)->pluck('brand')->all()))
             ->addColumn('given_price', fn($row) => $this->stack(
-                collect($row->offers)->map(fn($o) => number_format((float) ($o['price'] ?? 0)))->all()
+                collect($row->offers)->map(
+                    fn($o) => isset($o['price']) && $o['price'] !== ''
+                        ? number_format((float) $o['price'])
+                        : '-'
+                )->all()
             ))
             ->editColumn('status', fn($row) => match ((int) $row->status) {
                 1       => '<span class="badge bg-label-secondary">Received Data</span>',
@@ -49,10 +53,8 @@ class QuatationLogBookDataTable extends DataTable
                 3       => '<span class="badge bg-label-warning">Quotation Needed</span>',
                 default => '-',
             })
-            // Received Data hole PQ Taken By dekhabe na
-            ->editColumn('pq_taken_by', fn($row) => (int) $row->status === 1
-                ? '-'
-                : e($row->pqUser?->name ?? $row->pq_taken_by))
+            // Responsible Person: status jai hok shobshomoy dekhabe
+            ->editColumn('pq_taken_by', fn($row) => e($row->pqUser?->name ?? $row->pq_taken_by ?? '-'))
             ->editColumn('pq_date', fn($row) => $row->pq_date?->format('d/m/y'))
             ->addColumn('action', function ($row) {
                 // export-er somoy action column render korbo na (slow hoy)
@@ -138,7 +140,7 @@ class QuatationLogBookDataTable extends DataTable
             Column::make('sub_station')->title('Sub-station'),
             Column::make('generator')->title('Generator'),
             Column::make('status')->title('Status')->addClass('text-center'),
-            Column::make('pq_taken_by')->title('PQ Taken By'),
+            Column::make('pq_taken_by')->title('Responsible Person'),
             Column::make('pq_date')->title('PQ Date'),
             Column::make('remarks')->title('Remarks'),
         ];
