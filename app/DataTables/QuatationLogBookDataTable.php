@@ -56,6 +56,18 @@ class QuatationLogBookDataTable extends DataTable
             // Responsible Person: status jai hok shobshomoy dekhabe
             ->editColumn('pq_taken_by', fn($row) => e($row->pqUser?->name ?? $row->pq_taken_by ?? '-'))
             ->editColumn('pq_date', fn($row) => $row->pq_date?->format('d/m/y'))
+            // Remarks: line break (\n) ebong " | " bhenge niche niche dekhabe
+            ->editColumn('remarks', function ($row) {
+                $html = nl2br(e(str_replace(' | ', "\n", (string) $row->remarks)));
+
+                // export-er somoy shudhu <br> (onno column-er moto), table-e wrap kora div
+                if (request()->boolean('export')) {
+                    return $html;
+                }
+
+                return '<div style="white-space:normal;min-width:220px;max-width:300px;word-break:break-word;">'
+                    . $html . '</div>';
+            })
             ->addColumn('action', function ($row) {
                 // export-er somoy action column render korbo na (slow hoy)
                 if (request()->boolean('export')) {
@@ -92,7 +104,7 @@ class QuatationLogBookDataTable extends DataTable
             })
             ->rawColumns([
                 'contact_numbers', 'contact_persons', 'lift_size',
-                'lift_brand', 'given_price', 'status', 'action',
+                'lift_brand', 'given_price', 'status', 'remarks', 'action',
             ])
             ->setRowId('id');
     }
